@@ -1,0 +1,49 @@
+Reflections on design decisions
+
+ndb.Word
+
+This model stores words that are used as targets in the app. The model also stores a list form of the word (ie. list of characters). I did this because i figured it would be easier to store answers, attempts and history as lists and it would be easier to compare the target to list rather than a string and since guesses are made each letter at a time.
+
+The add_word endpoint accepts the word, converts it to a list of uppercase
+characters (for example, apple would be become [A,P,P,L,E]). I converted each word to uppercase to standardize guesses and word targets. This endpoint also raises an BadRequestException for any invalid word. Invalid words include two-words, numbers and special characters.
+
+
+ndb.User
+
+This model stores name, email, wins, total_played, average_score and total_score. To populate these fields I've included a few helper functions. Name and email are both string fields and are populated by the user. The helper functions add_win(), add_loss(), update_score() were added to assist in updating the wins, total_score and average_score. I figured all rank and score information related to a user account should be stored in the user db rather than game, score or leaderboard db.
+
+
+ndb.Game
+
+This model stores all information related to a game. Each Game entity is a child of a 'User' entity. Each game and game state can be accessed via a urlsafe_key which is created when a registered user creates a new_game. In addtion to the name and game_over fields I added target, failed_tries, history and answer list fields and attempts_remaining and target_length integer fields. 
+target: Stores target word in list form, randomly assigned.
+answer: Stores correct guesses the user makes.
+failed_tries: Stores inccorect guesses the user makes.
+history: Stores all the guesses the user makes.
+
+I used lists rather than strings because I felt it would be easier to log tries and compare the answer to the target. In retrospect I could have implemented the same functionality with strings.
+
+There are 3 helper functions associated with this model. new_game, end_game and to_form.
+
+new_game: it is called by the new_game endpoint, picks a random word from the Word model, and sets the history, failed tries to empty lists and answer to "-" with the same length as the target word.
+
+end_game: since all the answer, history, target and guess checking is handled by the make_move endpoint, this method is called when a game ends, ie when a user runs out of attempts or guesses the correct word. When end_game is called, add_win, add_loss and update_score are called to update the user entity and an instance of the Score model is also created. Im not sure whether it would have made sense to move the target/guess checking code into a separte file since it is only a few lines of code, but this code would ideally be separated from the endpoint logic for a more sophiscticated game.
+
+to_form: this method was created to simplify the outbound messages after a game state was updated, changed or created.
+
+
+ndb.Score
+This model stores completed game information as entities with the following attributes and is a child of the user class:
+user: key property, if this was a multi-player game it would be a child of the game class and would use the game key.
+
+date: to add a time stamp
+
+won: the result of the game
+
+guesses: the number of guesses the user had left
+
+points: the points the user drew from the game, if any.
+
+DISCLOSURE: I took two-three months off this project because i felt i did not understand GAE, models and messages. I re-took the course and something clicked, i think it took some time for the concepts to sink in. 
+
+
