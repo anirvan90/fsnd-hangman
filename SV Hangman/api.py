@@ -221,12 +221,13 @@ class SVHangmanAPI(remote.Service):
             raise endpoints.ConflictException('That word is in the list!')
         else:
             word_list = []
-            for i in request.word:
-                if i ==" ":
+            temp = request.word.upper()
+            for i in temp:
+                if i ==" " or i < 'A' or i > 'Z':
                     raise endpoints.BadRequestException(
                                 'Please Enter One Word!')
                 else:
-                    word_list.append(i.upper())
+                    word_list.append(i)
             w = Word(word=request.word, word_list=word_list)
             w.put()
         return StringMessage(message='Added %s to the list!' % request.word)
