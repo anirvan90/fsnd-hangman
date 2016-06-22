@@ -40,6 +40,11 @@ This a simple one-player hangman game where a user is randomly assigned a target
 word and has 7 attempts to guess the word correctly. 
 
 ###Rules
+For each game a user is allowed a maximum of 7 incorrect tries (see scoring and
+gameplay below). Words are assigned from the ndb.Word model, in which words can
+be inputted through the add_word endpoint (see Endpoints). Only single word
+targets are allowed with no special characters. Words are automatticaly
+converted to UpperCase by design.
 
 ###Scoring
 For each game a user is allowed a maximum of 7 incorrect attempts after which
@@ -61,7 +66,21 @@ in guessing the word would yield a score of 9. See the table below:
 |         7         |   0   |
 
 ###Game Play
-
+A user must create credentials (user_name and email) in order to play. A unique
+username is required. Once a user is registered, a user may create a new 'Game'
+entity by entering his/her unique user_name. Each 'Game' entity has a unique
+urlsafe_key needed to access the game and make moves. This key is generated
+automatically. In additon to the key, a word target is also randomly assigned.
+This target is a Word in the form of a list of characters. To make a move, the
+user (or front-end app) must enter the unique urlsafe_key to access the 'Game'
+and provide a 'guess' character. The make_move endpoint checks whether the guess
+is valid and places is it in the appropriate 'answer' or 'failed_attempts' list
+and also appends it to the 'history' list to keep track of moves made. Each
+'Game' has a maximum of 7 failed attempts allowed, after which the game ends.
+If the user guesses the word correctly, the game ends, and an approciate score
+is given. As soon as the 'Game' has ended a 'Score' entity is created that
+stores the history of completed games with appropriate game states.
+ 
 ##Endpoints
 - **create_user**
 	- Path: user
@@ -154,7 +173,7 @@ in guessing the word would yield a score of 9. See the table below:
 ##ndb.Models
 
  * __User__
- 	* Stores name(must be unique), email, wins, total_played, total score and
+ 	* Stores name(must be unique), email, wins, total_played, total_score and
 average_score
 
  * __Game__
@@ -168,4 +187,29 @@ the KeyProperty
  	* Stores words in the datastore
 
 ##ProtoRPC MessageClasses
-
+* __UserForm__
+	* Representation of 'User' entity attributes (name, email, wins, 
+	total_score, total_played and average_score) 
+* __UserForms__
+	* Multiple UserForm container.
+* __GameForm__
+	* Representation of a 'Game' entity state and attributes (user, game_over,
+	attempts_remaining, target, target_length, history, answer, failed_attempts)
+* __GameForms__
+	* Multiple GameForm container.
+* __MakeMoveForm__
+	* In bound make_move form for guess attempts.
+* __ScoreForm__
+	* Representation of a completed games score attributes (name, date, won,
+	guesses and points).
+* __ScoreForms__
+	* Multiple ScoreForm container.
+* __RankForm__
+	* Representation of a user's rank by average_score (name, tota_played,
+	total_score, average_score).
+* __RankForms__
+	* Multiple RankForm container.
+* __StringMessage__
+	* General purpose string container.
+* __WordForm__
+	* In bound add_word form for entering a 'Word' into datastore.
