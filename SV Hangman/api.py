@@ -3,13 +3,9 @@ This can also contain game logic. For more complex games it would be wise to
 move game logic to another file. Ideally the API will be simple, concerned 
 primarily with communication to and from the API's users."""
 
-import logging
+
 import endpoints
-import string
-import random
 from protorpc import messages, remote, message_types
-from google.appengine.api import memcache
-from google.appengine.ext import ndb
 
 from models import User, Word, Game, Score
 from models import StringMessage, UserForm, WordForm, GameForm, \
@@ -75,7 +71,7 @@ class SVHangmanAPI(remote.Service):
         game = get_by_urlsafe(request.urlsafe_key, Game)
         if not game:
             raise endpoints.NotFoundException('Game Not Found')
-        else: 
+        else:
             if game.game_over:
                 return game.to_form(message="This Game has ended!")
             else:
@@ -92,7 +88,7 @@ class SVHangmanAPI(remote.Service):
         guess = request.guess.upper()
         if game.game_over:
             raise endpoints.NotFoundException('This Game Has Ended!')
-        if len(guess) != 1 or guess <'A' or guess > 'Z':
+        if len(guess) != 1 or guess < 'A' or guess > 'Z':
             raise endpoints.BadRequestException('Please enter a valid guess!')
         if guess in game.failed_tries or guess in game.answer:
             return game.to_form(message='You have already tried that!')
@@ -108,7 +104,7 @@ class SVHangmanAPI(remote.Service):
                 if game.answer == game.target:
                     game.end_game(True)
                     return game.to_form(message="You Won!!")
-                else:        
+                else:
                     return game.to_form(message="You guessed correct!")
             else:
                 if game.attempts_remaining <= 1:
@@ -116,7 +112,7 @@ class SVHangmanAPI(remote.Service):
                     game.end_game(False)
                     return game.to_form(message="Game Over! The word was: %s"
                                         % game.target)
-                else:    
+                else:
                     game.failed_tries.append(guess)
                     game.history.append(guess)
                     game.attempts_remaining -= 1
@@ -135,8 +131,8 @@ class SVHangmanAPI(remote.Service):
             raise endpoints.NotFoundException(
                 'A user with that name does not exist!')
         games = Game.query(Game.user == user.key, Game.game_over == False)
-        return GameForms(items=[game.to_form(
-                message="Game In Progress") for game in games])
+        return GameForms(items=[game.to_form(message="Game In Progress")
+                         for game in games])
 
     @endpoints.method(request_message=USER_REQUEST,
                       response_message=GameForms,
@@ -164,7 +160,7 @@ class SVHangmanAPI(remote.Service):
         if game and not game.game_over:
             game.key.delete()
             return StringMessage(message='Game with key: {} deleted.'.
-                                format(request.urlsafe_key))
+                                 format(request.urlsafe_key))
         elif game and game.game_over:
             raise endpoints.BadRequestException('Game is already over!')
         else:
@@ -194,10 +190,8 @@ class SVHangmanAPI(remote.Service):
         result_count = 10
         if request.number_of_results is not None:
             result_count = request.number_of_results
-    
-        return UserForms(items=
-            [user.to_form() for user in User.query().order(-User.total_score).
-            fetch(result_count)])
+        return UserForms(items=[user.to_form() for user in User.query().
+                                order(-User.total_score).fetch(result_count)])
 
     @endpoints.method(request_message=message_types.VoidMessage,
                       response_message=RankForms,
@@ -207,9 +201,8 @@ class SVHangmanAPI(remote.Service):
     def get_user_rankings(self, request):
         """Return all user rankings"""
         users = User.query().order(-User.average_score)
-        return RankForms(items=
-            [user.to_rank_form() for user in users])
-   
+        return RankForms(items=[user.to_rank_form() for user in users])
+
     @endpoints.method(request_message=WordForm,
                       response_message=StringMessage,
                       path='word',
@@ -223,9 +216,9 @@ class SVHangmanAPI(remote.Service):
             word_list = []
             temp = request.word.upper()
             for i in temp:
-                if i ==" " or i < 'A' or i > 'Z':
+                if i == " " or i < 'A' or i > 'Z':
                     raise endpoints.BadRequestException(
-                                'Please Enter One Word!')
+                        'Please Enter One Word!')
                 else:
                     word_list.append(i)
             w = Word(word=request.word, word_list=word_list)
