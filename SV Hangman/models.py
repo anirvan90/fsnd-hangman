@@ -137,9 +137,13 @@ class Score (ndb.Model):
     points = ndb.IntegerProperty(required=True, default=0)
 
     def to_form(self):
-        return ScoreForm(user_name=self.User.get().name, won=self.won,
-                         date=str(self.date), guesses=self.guesses,
-                         points=self.points)
+        form = ScoreForm()
+        form.user_name = self.user.get().name
+        form.date = str(self.date)
+        form.won = self.won
+        form.guesses = self.guesses
+        form.points = self.points
+        return form
 
 
 class GameForm(messages.Message):
